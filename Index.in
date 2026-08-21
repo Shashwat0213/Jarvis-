@@ -1,1 +1,343 @@
-# Jarvis
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS V3</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:#0b1020;color:#fff}
+header{
+background:#11182d;
+padding:16px;
+text-align:center;
+font-size:24px;
+font-weight:bold;
+color:#00d4ff;
+}
+#chat{
+height:72vh;
+overflow:auto;
+padding:12px;
+}
+.msg{
+padding:10px;
+border-radius:12px;
+margin:8px 0;
+background:#1b2338;
+white-space:pre-wrap;
+}
+.user{background:#0ea5e9;}
+#status{
+text-align:center;
+padding:8px;
+color:#8fa8ff;
+}
+button{
+width:90%;
+margin:10px 5%;
+padding:16px;
+border:none;
+border-radius:30px;
+background:#00d4ff;
+font-size:18px;
+font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>JARVIS V3</header>
+
+<div id="chat"></div>
+<div id="status">Ready...</div>
+
+<button onclick="startListening()">🎤 Talk to Jarvis</button>
+
+<script>
+
+// ========= PASTE API KEY HERE =========
+const API_KEY = "AQ.Ab8RN6I5RG3OZ5nHEbwUJl7UMQT3nwX6EEkZ-LXVy_gB4sYuOA";
+// =====================================
+
+const chat = document.getElementById("chat");
+const status = document.getElementById("status");
+
+function addMessage(text,isUser=false){
+const div=document.createElement("div");
+div.className="msg"+(isUser?" user":"");
+div.innerText=text;
+chat.appendChild(div);
+chat.scrollTop=chat.scrollHeight;
+}
+
+function speak(text){
+speechSynthesis.cancel();
+const u=new SpeechSynthesisUtterance(text);
+u.lang="en-IN";
+speechSynthesis.speak(u);
+}
+
+async function askJarvis(question){
+
+addMessage(question,true);
+status.innerText="Thinking...";
+
+try{
+
+const res=await fetch(
+"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="+API_KEY,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+contents:[
+{
+parts:[
+{
+text:`You are JARVIS.
+Reply naturally in Hindi or English.
+Keep answers short.
+
+User: ${question}`
+}
+]
+}
+]
+})
+});
+
+const data=await res.json();
+
+let reply="Sorry, I couldn't understand.";
+
+if(data.candidates){
+reply=data.candidates[0].content.parts[0].text;
+}
+
+addMessage(reply);
+speak(reply);
+
+}catch(e){
+addMessage("API Error");
+console.log(e);
+}
+
+status.innerText="Ready...";
+}
+
+function startListening(){
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+if(!SR){
+alert("Speech Recognition not supported");
+return;
+}
+
+const rec=new SR();
+
+rec.lang="en-IN";
+rec.interimResults=false;
+rec.maxAlternatives=1;
+
+status.innerText="Listening...";
+
+rec.onresult=(e)=>{
+const text=e.results[0][0].transcript;
+askJarvis(text);
+};
+
+rec.onerror=()=>{
+status.innerText="Microphone Error";
+};
+
+rec.onend=()=>{
+if(status.innerText==="Listening...")
+status.innerText="Ready...";
+};
+
+rec.start();
+}
+
+addMessage("Hello! I am Jarvis.");
+</script>
+
+</body>
+</html>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JARVIS V3</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial}
+body{background:#0b1020;color:#fff}
+header{
+background:#11182d;
+padding:16px;
+text-align:center;
+font-size:24px;
+font-weight:bold;
+color:#00d4ff;
+}
+#chat{
+height:72vh;
+overflow:auto;
+padding:12px;
+}
+.msg{
+padding:10px;
+border-radius:12px;
+margin:8px 0;
+background:#1b2338;
+white-space:pre-wrap;
+}
+.user{background:#0ea5e9;}
+#status{
+text-align:center;
+padding:8px;
+color:#8fa8ff;
+}
+button{
+width:90%;
+margin:10px 5%;
+padding:16px;
+border:none;
+border-radius:30px;
+background:#00d4ff;
+font-size:18px;
+font-weight:bold;
+}
+</style>
+</head>
+
+<body>
+
+<header>JARVIS V3</header>
+
+<div id="chat"></div>
+<div id="status">Ready...</div>
+
+<button onclick="startListening()">🎤 Talk to Jarvis</button>
+
+<script>
+
+// ========= PASTE API KEY HERE =========
+const API_KEY = "AQ.Ab8RN6I5RG3OZ5nHEbwUJl7UMQT3nwX6EEkZ-LXVy_gB4sYuOA";
+// =====================================
+
+const chat = document.getElementById("chat");
+const status = document.getElementById("status");
+
+function addMessage(text,isUser=false){
+const div=document.createElement("div");
+div.className="msg"+(isUser?" user":"");
+div.innerText=text;
+chat.appendChild(div);
+chat.scrollTop=chat.scrollHeight;
+}
+
+function speak(text){
+speechSynthesis.cancel();
+const u=new SpeechSynthesisUtterance(text);
+u.lang="en-IN";
+speechSynthesis.speak(u);
+}
+
+async function askJarvis(question){
+
+addMessage(question,true);
+status.innerText="Thinking...";
+
+try{
+
+const res=await fetch(
+"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="+API_KEY,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+contents:[
+{
+parts:[
+{
+text:`You are JARVIS.
+Reply naturally in Hindi or English.
+Keep answers short.
+
+User: ${question}`
+}
+]
+}
+]
+})
+});
+
+const data=await res.json();
+
+let reply="Sorry, I couldn't understand.";
+
+if(data.candidates){
+reply=data.candidates[0].content.parts[0].text;
+}
+
+addMessage(reply);
+speak(reply);
+
+}catch(e){
+addMessage("API Error");
+console.log(e);
+}
+
+status.innerText="Ready...";
+}
+
+function startListening(){
+
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+
+if(!SR){
+alert("Speech Recognition not supported");
+return;
+}
+
+const rec=new SR();
+
+rec.lang="en-IN";
+rec.interimResults=false;
+rec.maxAlternatives=1;
+
+status.innerText="Listening...";
+
+rec.onresult=(e)=>{
+const text=e.results[0][0].transcript;
+askJarvis(text);
+};
+
+rec.onerror=()=>{
+status.innerText="Microphone Error";
+};
+
+rec.onend=()=>{
+if(status.innerText==="Listening...")
+status.innerText="Ready...";
+};
+
+rec.start();
+}
+
+addMessage("Hello! I am Jarvis.");
+</script>
+
+</body>
+</html>
+
