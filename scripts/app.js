@@ -847,4 +847,135 @@
       updateHighlight(items);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      state
+      state.highlightIdx = Math.max(state.highlightIdx - 1, 0);
+      updateHighlight(items);
+    } else if (e.key === "Enter" && state.highlightIdx >= 0 && state.searchResults[state.highlightIdx]) {
+      e.preventDefault();
+      addMovieFromResult(state.searchResults[state.highlightIdx]);
+      closeDropdown();
+    } else if (e.key === "Escape") {
+      closeDropdown();
+    }
+  }
+
+  function updateScrollProgress() {
+    const el = $("scrollProgress");
+    if (!el) return;
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
+    el.style.width = pct + "%";
+  }
+
+  function setupScrollReveal() {
+    const els = document.querySelectorAll(".stat, .progress-bar-wrap, .filters, .hero, .theme-picker");
+    els.forEach(function (el) { el.classList.add("reveal"); });
+    const observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("revealed");
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+    document.querySelectorAll(".reveal").forEach(function (el) { observer.observe(el); });
+  }
+
+  function setupHeroParallax() {
+    const hero = document.querySelector(".hero");
+    if (!hero) return;
+    hero.addEventListener("mousemove", function (e) {
+      const rect = hero.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / rect.width - 0.5;
+      const y = (e.clientY - rect.top) / rect.height - 0.5;
+      hero.style.setProperty("--mouse-x", (x * 20) + "px");
+      hero.style.setProperty("--mouse-y", (y * 20) + "px");
+    });
+    hero.addEventListener("mouseleave", function () {
+      hero.style.setProperty("--mouse-x", "0px");
+      hero.style.setProperty("--mouse-y", "0px");
+    });
+  }
+
+  function hideLoader() {
+    const loader = $("appLoader");
+    if (loader) {
+      loader.classList.add("hidden");
+      setTimeout(function () {
+        if (loader && loader.parentNode) loader.parentNode.removeChild(loader);
+      }, 700);
+    }
+  }
+
+  function init() {
+    try {
+      loadVault();
+      loadCollections();
+      loadAchievements();
+      loadWatchHistory();
+
+      try {
+        const accent = localStorage.getItem(KEYS.THEME) || "gold";
+        document.body.dataset.accent = accent;
+        document.querySelectorAll(".swatch").forEach(function (s) {
+          s.classList.toggle("active", s.dataset.accent === accent);
+        });
+      } catch (e) {}
+
+      try {
+        if (localStorage.getItem(KEYS.MODE) === "1") {
+          document.body.classList.add("light");
+          const btn = $("themeToggle");
+          if (btn) btn.textContent = "☀️";
+        }
+      } catch (e) {}
+
+      const srcEl = $("searchSource");
+      if (srcEl) {
+        srcEl.textContent = CFG.TMDB_READY ? "✓ TMDB (Full Details)" : "iTunes Free Search";
+      }
+
+      renderAll();
+      bindEvents();
+      hideLoader();
+
+      if (window.CV_AUTH && window.CV_AUTH.init) {
+        window.CV_AUTH.init();
+      }
+
+      console.log("🎬 CineVault ready — " + state.vault.length + " movies in vault");
+    } catch (err) {
+      console.error("❌ Init failed:", err);
+      hideLoader();
+    }
+  }
+
+  window.CV_APP = {
+    esc: esc,
+    toast: toast,
+    renderAll: renderAll,
+    renderMovies: renderMovies,
+    updateStats: updateStats,
+    saveVault: saveVault,
+    loadVault: loadVault,
+    saveCollections: saveCollections,
+    loadCollections: loadCollections,
+    saveAchievements: saveAchievements,
+    saveWatchHistory: saveWatchHistory,
+    addMovieFromResult: addMovieFromResult,
+    openModal: openModal,
+    closeModal: closeModal,
+    openEdit: openEdit,
+    closeEdit: closeEdit,
+    toggleFavorite: toggleFavorite,
+    setStatus: setStatus,
+    getFiltered: getFiltered,
+    init: init
+  };
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+
+})();
