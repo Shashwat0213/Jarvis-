@@ -1,0 +1,588 @@
+/* =========================================================
+   CINEVAULT — THEMES
+   6 accent themes + 5 full page themes + light mode
+========================================================= */
+
+/* =========================================================
+   ACCENT THEMES (color only)
+========================================================= */
+body[data-accent="gold"] {
+  --primary: #ffb800;
+  --primary-2: #ff8c42;
+  --accent: #a855f7;
+  --accent-2: #ec4899;
+}
+
+body[data-accent="cyan"] {
+  --primary: #06b6d4;
+  --primary-2: #3b82f6;
+  --accent: #8b5cf6;
+  --accent-2: #ec4899;
+}
+
+body[data-accent="purple"] {
+  --primary: #a855f7;
+  --primary-2: #ec4899;
+  --accent: #f472b6;
+  --accent-2: #fb7185;
+}
+
+body[data-accent="green"] {
+  --primary: #22c55e;
+  --primary-2: #84cc16;
+  --accent: #14b8a6;
+  --accent-2: #06b6d4;
+}
+
+body[data-accent="red"] {
+  --primary: #ef4444;
+  --primary-2: #f97316;
+  --accent: #f43f5e;
+  --accent-2: #ec4899;
+}
+
+body[data-accent="pink"] {
+  --primary: #ec4899;
+  --primary-2: #f472b6;
+  --accent: #a855f7;
+  --accent-2: #8b5cf6;
+}
+
+/* =========================================================
+   LIGHT MODE
+========================================================= */
+body.light {
+  --bg: #f5f3fb;
+  --bg-2: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f9f7ff;
+  --border: rgba(0, 0, 0, 0.08);
+  --border-hover: rgba(0, 0, 0, 0.18);
+  --text: #0f0824;
+  --text-dim: #5a5070;
+  --text-mute: #8f85ab;
+}
+
+body.light .brand-name,
+body.light .hero-title,
+body.light .modal-title,
+body.light .empty h3 {
+  color: #0f0824;
+}
+
+body.light .hero::after {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.5), transparent 70%);
+}
+
+body.light .search-dropdown,
+body.light .results-drop {
+  background: #ffffff;
+}
+
+/* =========================================================
+   THEME 1: CINEMA (default)
+========================================================= */
+body[data-theme="cinema"] .brand-name,
+body[data-theme="cinema"] .hero-title,
+body[data-theme="cinema"] .modal-title {
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 2px;
+}
+
+body[data-theme="cinema"] .movie {
+  border-radius: 18px;
+}
+
+/* =========================================================
+   THEME 2: NEO TOKYO (cyberpunk, neon grid)
+========================================================= */
+body[data-theme="tokyo"] {
+  --bg: #050510;
+  --surface: #0a0a1f;
+  --surface-2: #12122e;
+  --border: rgba(0, 240, 255, 0.15);
+  --border-hover: rgba(0, 240, 255, 0.5);
+  --text: #e8f7ff;
+  --text-dim: #7a94a8;
+  --text-mute: #3a4a5c;
+  --primary: #00f0ff;
+  --primary-2: #ff00e5;
+  --accent: #ff00e5;
+  --accent-2: #00f0ff;
+  --success: #00ff88;
+  --danger: #ff2d55;
+}
+
+body[data-theme="tokyo"] .brand-name,
+body[data-theme="tokyo"] .hero-title,
+body[data-theme="tokyo"] .modal-title,
+body[data-theme="tokyo"] .search-label {
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+body[data-theme="tokyo"]::after {
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  animation: gridScroll 25s linear infinite;
+}
+
+body[data-theme="tokyo"]::before {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 0, 229, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(0, 240, 255, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at 50% 100%, rgba(255, 0, 229, 0.1) 0%, transparent 50%);
+}
+
+body[data-theme="tokyo"] .movie {
+  border-radius: 4px;
+  border-color: rgba(0, 240, 255, 0.25);
+}
+
+body[data-theme="tokyo"] .movie:hover {
+  border-color: var(--primary);
+  box-shadow:
+    0 0 20px rgba(0, 240, 255, 0.4),
+    inset 0 0 20px rgba(0, 240, 255, 0.05);
+}
+
+body[data-theme="tokyo"] .hero {
+  background: linear-gradient(135deg, #050510 0%, #0a0a25 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+body[data-theme="tokyo"] .hero-title {
+  background: linear-gradient(90deg, #00f0ff 0%, #ff00e5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 40px rgba(0, 240, 255, 0.4);
+}
+
+body[data-theme="tokyo"] .hero-eyebrow {
+  border-radius: 2px;
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #00f0ff;
+  letter-spacing: 5px;
+}
+
+body[data-theme="tokyo"] .btn,
+body[data-theme="tokyo"] .theme-btn,
+body[data-theme="tokyo"] .chip,
+body[data-theme="tokyo"] .search-input,
+body[data-theme="tokyo"] .stat,
+body[data-theme="tokyo"] .progress-bar-wrap,
+body[data-theme="tokyo"] .results-drop,
+body[data-theme="tokyo"] .modal-box {
+  border-radius: 4px;
+  border-color: rgba(0, 240, 255, 0.2);
+}
+
+body[data-theme="tokyo"] .search-input {
+  background: rgba(0, 10, 25, 0.8);
+  border-color: rgba(0, 240, 255, 0.3);
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 2px;
+  font-size: 1.05rem;
+}
+
+body[data-theme="tokyo"] .search-input:focus {
+  border-color: #00f0ff;
+  box-shadow:
+    0 0 0 3px rgba(0, 240, 255, 0.15),
+    0 0 30px rgba(0, 240, 255, 0.3);
+}
+
+body[data-theme="tokyo"] .btn-primary,
+body[data-theme="tokyo"] .chip.active,
+body[data-theme="tokyo"] .status-pick.on {
+  background: linear-gradient(135deg, #00f0ff, #ff00e5);
+  color: #050510;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.5);
+}
+
+body[data-theme="tokyo"] .brand-name {
+  background: linear-gradient(135deg, #00f0ff 0%, #ff00e5 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 20px rgba(0, 240, 255, 0.6);
+}
+
+body[data-theme="tokyo"] .wrap::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0,
+    transparent 2px,
+    rgba(0, 240, 255, 0.015) 2px,
+    rgba(0, 240, 255, 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 9998;
+  animation: scanMove 8s linear infinite;
+}
+
+@keyframes gridScroll {
+  to { background-position: 44px 44px; }
+}
+
+@keyframes scanMove {
+  to { transform: translateY(4px); }
+}
+
+/* =========================================================
+   THEME 3: PAPER (minimal editorial)
+========================================================= */
+body[data-theme="paper"] {
+  --bg: #f5f1e8;
+  --surface: #ffffff;
+  --surface-2: #faf7f0;
+  --border: rgba(0, 0, 0, 0.12);
+  --border-hover: rgba(0, 0, 0, 0.4);
+  --text: #1a1a1a;
+  --text-dim: #555;
+  --text-mute: #888;
+  --primary: #c9452c;
+  --primary-2: #8b1e1e;
+  --accent: #2c5f5d;
+  --accent-2: #c9452c;
+  --success: #2c5f5d;
+  --danger: #c9452c;
+}
+
+body[data-theme="paper"]::before {
+  background:
+    radial-gradient(circle at 20% 10%, rgba(201, 69, 44, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 90%, rgba(44, 95, 93, 0.04) 0%, transparent 50%),
+    #f5f1e8;
+}
+
+body[data-theme="paper"]::after {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.5;
+}
+
+body[data-theme="paper"] .brand-name,
+body[data-theme="paper"] .modal-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: -1px;
+  text-transform: none;
+  background: none;
+  color: #1a1a1a;
+  -webkit-text-fill-color: initial;
+  text-shadow: none;
+  font-style: italic;
+}
+
+body[data-theme="paper"] .hero-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -2px;
+  line-height: 1;
+  background: none;
+  color: #1a1a1a;
+  -webkit-text-fill-color: initial;
+  text-transform: none;
+}
+
+body[data-theme="paper"] .hero-title .accent {
+  background: none;
+  -webkit-text-fill-color: initial;
+  color: #c9452c;
+  font-style: italic;
+}
+
+body[data-theme="paper"] .hero {
+  background: #ffffff;
+  border-radius: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: none;
+}
+
+body[data-theme="paper"] .hero::before,
+body[data-theme="paper"] .hero::after {
+  display: none;
+}
+
+body[data-theme="paper"] .movie {
+  border-radius: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+body[data-theme="paper"] .movie:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+body[data-theme="paper"] .movie-title {
+  font-family: "Playfair Display", Georgia, serif;
+  font-weight: 500;
+  font-style: italic;
+  font-size: 0.9rem;
+}
+
+body[data-theme="paper"] .btn,
+body[data-theme="paper"] .theme-btn,
+body[data-theme="paper"] .chip,
+body[data-theme="paper"] .search-input,
+body[data-theme="paper"] .stat,
+body[data-theme="paper"] .progress-bar-wrap {
+  border-radius: 0;
+}
+
+body[data-theme="paper"] .stat {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+body[data-theme="paper"] .btn-primary {
+  background: #1a1a1a;
+  color: #fff;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+body[data-theme="paper"] .chip.active {
+  background: #c9452c;
+  color: #fff;
+}
+
+body[data-theme="paper"] .search-input {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  font-family: "Playfair Display", Georgia, serif;
+  font-style: italic;
+  font-size: 1rem;
+}
+
+body[data-theme="paper"] .hero-eyebrow {
+  background: #1a1a1a;
+  color: #fff;
+  border-radius: 0;
+  letter-spacing: 3px;
+}
+
+/* =========================================================
+   THEME 4: RETRO VHS (synthwave)
+========================================================= */
+body[data-theme="vhs"] {
+  --bg: #16062b;
+  --surface: #200b3f;
+  --surface-2: #2a1250;
+  --border: rgba(255, 0, 110, 0.25);
+  --border-hover: rgba(255, 0, 110, 0.6);
+  --text: #fff0ff;
+  --text-dim: #c899ff;
+  --text-mute: #7a4dad;
+  --primary: #ff006e;
+  --primary-2: #8338ec;
+  --accent: #3a86ff;
+  --accent-2: #ffbe0b;
+  --danger: #ff006e;
+}
+
+body[data-theme="vhs"]::before {
+  background:
+    radial-gradient(circle at 50% 100%, rgba(255, 0, 110, 0.25) 0%, transparent 45%),
+    radial-gradient(circle at 20% 20%, rgba(131, 56, 236, 0.2) 0%, transparent 40%),
+    radial-gradient(circle at 80% 20%, rgba(58, 134, 255, 0.15) 0%, transparent 40%);
+}
+
+body[data-theme="vhs"]::after {
+  background-image: linear-gradient(transparent 50%, rgba(255, 0, 110, 0.03) 50%);
+  background-size: 100% 4px;
+  opacity: 0.6;
+}
+
+body[data-theme="vhs"] .brand-name,
+body[data-theme="vhs"] .hero-title {
+  font-family: "Bebas Neue", sans-serif;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fff 0%, #ff006e 50%, #8338ec 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-style: italic;
+  text-shadow:
+    3px 0 0 rgba(255, 0, 110, 0.5),
+    -3px 0 0 rgba(58, 134, 255, 0.5);
+}
+
+body[data-theme="vhs"] .movie {
+  border-radius: 2px;
+  border-color: rgba(255, 0, 110, 0.35);
+  background: linear-gradient(180deg, #200b3f 0%, #16062b 100%);
+}
+
+body[data-theme="vhs"] .movie:hover {
+  transform: translate(-3px, -3px);
+  box-shadow:
+    6px 6px 0 #ff006e,
+    6px 6px 0 1px rgba(255, 0, 110, 0.5);
+  border-color: #ff006e;
+}
+
+body[data-theme="vhs"] .hero {
+  background: linear-gradient(180deg, #2a1250 0%, #16062b 100%);
+  border-radius: 0;
+  border-top: 2px solid #ff006e;
+  border-bottom: 2px solid #8338ec;
+  border-left: none;
+  border-right: none;
+}
+
+body[data-theme="vhs"] .btn,
+body[data-theme="vhs"] .chip {
+  border-radius: 2px;
+}
+
+body[data-theme="vhs"] .btn-primary,
+body[data-theme="vhs"] .chip.active,
+body[data-theme="vhs"] .status-pick.on {
+  background: linear-gradient(90deg, #ff006e, #8338ec);
+  color: #fff;
+  box-shadow: 3px 3px 0 #3a86ff;
+}
+
+body[data-theme="vhs"] .search-input {
+  border-radius: 2px;
+  border-color: #8338ec;
+  background: #0f0420;
+}
+
+/* =========================================================
+   THEME 5: EMERALD (luxury)
+========================================================= */
+body[data-theme="emerald"] {
+  --bg: #08130f;
+  --surface: #0f2019;
+  --surface-2: #142a20;
+  --border: rgba(212, 175, 55, 0.18);
+  --border-hover: rgba(212, 175, 55, 0.5);
+  --text: #f4f1e6;
+  --text-dim: #8fa896;
+  --text-mute: #5a6f60;
+  --primary: #d4af37;
+  --primary-2: #b8860b;
+  --accent: #0e7c5a;
+  --accent-2: #d4af37;
+  --success: #2ecc71;
+  --danger: #c73e3e;
+}
+
+body[data-theme="emerald"]::before {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(212, 175, 55, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 85% 30%, rgba(14, 124, 90, 0.12) 0%, transparent 45%),
+    radial-gradient(circle at 50% 100%, rgba(212, 175, 55, 0.05) 0%, transparent 50%);
+}
+
+body[data-theme="emerald"] .brand-name,
+body[data-theme="emerald"] .hero-title,
+body[data-theme="emerald"] .modal-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  background: linear-gradient(135deg, #f4f1e6 0%, #d4af37 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body[data-theme="emerald"] .hero-title .accent {
+  font-style: italic;
+  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+body[data-theme="emerald"] .hero {
+  background: linear-gradient(135deg, #0f2019 0%, #08130f 100%);
+  border: 1px solid rgba(212, 175, 55, 0.25);
+  border-radius: 4px;
+  box-shadow:
+    inset 0 0 60px rgba(212, 175, 55, 0.04),
+    0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+body[data-theme="emerald"] .hero::before {
+  background: conic-gradient(
+    from 90deg,
+    transparent 0 42%,
+    #d4af37 48%,
+    transparent 55%,
+    #0e7c5a 65%,
+    transparent 75%
+  );
+  opacity: 0.12;
+}
+
+body[data-theme="emerald"] .movie {
+  border-radius: 6px;
+  border-color: rgba(212, 175, 55, 0.2);
+  background: linear-gradient(180deg, #142a20 0%, #0f2019 100%);
+}
+
+body[data-theme="emerald"] .movie:hover {
+  border-color: #d4af37;
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.4),
+    0 0 30px rgba(212, 175, 55, 0.15);
+}
+
+body[data-theme="emerald"] .movie-title {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.3px;
+}
+
+body[data-theme="emerald"] .hero-eyebrow {
+  background: rgba(212, 175, 55, 0.08);
+  border-color: rgba(212, 175, 55, 0.4);
+  color: #d4af37;
+  border-radius: 2px;
+  font-weight: 600;
+  letter-spacing: 4px;
+}
+
+body[data-theme="emerald"] .btn-primary,
+body[data-theme="emerald"] .chip.active,
+body[data-theme="emerald"] .status-pick.on {
+  background: linear-gradient(135deg, #d4af37, #b8860b);
+  color: #08130f;
+  box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+}
+
+body[data-theme="emerald"] .stat {
+  border-color: rgba(212, 175, 55, 0.15);
+}
+
+body[data-theme="emerald"] .stat-num {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-weight: 700;
+}
+
+/* =========================================================
+   THEME-SPECIFIC WRAP OVERRIDES
+========================================================= */
+
+/* Make sure wrap stays above overlays */
+body[data-theme="tokyo"] .wrap {
+  position: relative;
+  z-index: 1;
+}
