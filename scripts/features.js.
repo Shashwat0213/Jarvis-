@@ -1,0 +1,947 @@
+/* =========================================================
+   CINEVAULT — FEATURES MODULE
+   Star Rating, Collections, Stats, Achievements,
+   Calendar, Share, Export, Similar Movies, Recommendations
+========================================================= */
+
+(function () {
+  "use strict";
+
+  const CFG = window.CV_CONFIG;
+  const state = window.CV;
+  const API = window.CV_API;
+
+  if (!CFG || !state || !API) {
+    console.error("❌ config.js / api.js not loaded before features.js");
+    return;
+  }
+
+  const $ = function (id) { return document.getElementById(id); };
+  const KEYS = CFG.STORAGE_KEYS;
+  const esc = (window.CV_APP && window.CV_APP.esc) || function (s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  };
+  const toast = (window.CV_APP && window.CV_APP.toast) || function () {};
+
+  /* =========================================================
+     STAR RATING
+  ========================================================== */
+  function setStars(rating) {
+    const container = $("starRating");
+    const valueEl = $("ratingValue");
+    if (!container) return;
+
+    container.dataset.rating = rating || 0;
+    const stars = container.querySelectorAll(".star");
+
+    stars.forEach(function (star, i) {
+      star.classList.toggle("on", i < rating);
+    });
+
+    if (valueEl) {
+      valueEl.textContent = rating > 0 ? rating + " / 5 stars" : "Not rated";
+    }
+  }
+
+  function bindStarRating() {
+    const container = $("starRating");
+    if (!container) return;
+
+    container.querySelectorAll(".star").forEach(function (star) {
+      star.addEventListener("click", function () {
+        const val = parseInt(star.dataset.value, 10);
+        setStars(val);
+        star.classList.add("on");
+
+        const m = state.vault.find(function (v) { return v.id === state.modalId; });
+        if (m) {
+          m.userRating = val;
+          // Also update 10-scale for backward compat
+          m.userRating10 = val * 2;
+          try { localStorage.setItem(KEYS.VAULT, JSON.stringify(state.vault)); } catch (e) {}
+          if (window.CV_APP && window.CV_APP.renderAll) window.CV_APP.renderAll();
+          if (window.CV_AUTH && window.CV_AUTH.scheduleCloudSave) window.CV_AUTH.scheduleCloudSave();
+          toast("⭐ Rated " + val + " stars");
+        }
+      });
+      star.addEventListener("mouseenter", function () {
+        const val = parseInt(star.dataset.value, 10);
+        container.querySelectorAll(".star").forEach(function (s, i) {
+          s.style.color = i < val ? "#ffd700" : "";
+        });
+      });
+      star.addEventListener("mouseleave", function () {
+        const current = parseInt(container.dataset.rating, 10) || 0;
+        container.querySelectorAll(".star").forEach(function (s, i) {
+          s.style.color = i < current ? "#ffd700" : "";
+        });
+      });
+    });
+  }
+
+  /* =========================================================
+     SIMILAR MOVIES (Recommendations)
+  ========================================================== */
+  async function loadSimilar(tmdbId) {
+    const section = $("similarSection");
+    const grid = $("similarGrid");
+    if (!section || !grid) return;
+
+    if (!tmdbId || !CFG.TMDB_READY) {
+      section.style.display = "none";
+      return;
+    }
+
+    section.style.display = "block";
+    grid.innerHTML = '<div class="skeleton" style="width:100%;aspect-ratio:2/3"></div>'.repeat(6);
+
+    try {
+      const results = await API.fetchSimilarMovies(tmdbId);
+      if (!results.length) {
+        section.style.display = "none";
+        return;
+      }
+
+      grid.innerHTML = results.map(function (m) {
+        return '<div class="similar-item" data-tmdb="' + m.tmdbId + '" data-sourceid="' + esc(m.sourceId) + '">' +
+          '<img src="' + esc(m.poster) + '" alt="" onerror="this.src=\'https://placehold.co/200x300/1a1030/ffb800?text=?\'">' +
+          '<p>' + esc(m.title) + '</p>' +
+        '</div>';
+      }).join("");
+
+      grid.querySelectorAll(".similar-item").forEach(function (item) {
+        item.addEventListener("click", async function () {
+          const sourceId = item.dataset.sourceid;
+          const tmdbId = item.dataset.tmdb;
+
+          // Already in vault? Just open it
+          const existing = state.vault.find(function (v) { return v.sourceId === sourceId; });
+          if (existing) {
+            if (window.CV_APP && window.CV_APP.closeModal) window.CV_APP.closeModal();
+            setTimeout(function () {
+              if (window.CV_APP && window.CV_APP.openModal) window.CV_APP.openModal(existing.id);
+            }, 300);
+            return;
+          }
+
+          // Add to vault
+          try {
+            const details = await API.fetchTMDBDetails(tmdbId);
+            const result = results.find(function (r) { return r.tmdbId == tmdbId; });
+            if (!result) return;
+
+            const movie = API.buildMovieObject(result, details || {}, "want");
+            state.vault.unshift(movie);
+            if (window.CV_APP && window.CV_APP.saveVault) window.CV_APP.saveVault();
+            if (window.CV_APP && window.CV_APP.renderAll) window.CV_APP.renderAll();
+            toast("✓ " + movie.title + " added");
+            if (window.CV_AUTH && window.CV_AUTH.scheduleCloudSave) window.CV_AUTH.scheduleCloudSave();
+
+            if (window.CV_APP && window.CV_APP.closeModal) window.CV_APP.closeModal();
+            setTimeout(function () {
+              if (window.CV_APP && window.CV_APP.openModal) window.CV_APP.openModal(movie.id);
+            }, 300);
+          } catch (err) {
+            console.error(err);
+            toast("Could not add movie", true);
+          }
+        });
+      });
+    } catch (err) {
+      console.error("Similar fetch failed:", err);
+      section.style.display = "none";
+    }
+  }
+
+  /* =========================================================
+     COLLECTIONS
+  ========================================================== */
+  function renderCollectionsList() {
+    const list = $("collectionsList");
+    if (!list) return;
+
+    if (state.collections.length === 0) {
+      list.innerHTML = '<div style="text-align:center;padding:24px 12px;color:var(--text-dim);font-size:.82rem">No collections yet. Create one below.</div>';
+      return;
+    }
+
+    list.innerHTML = state.collections.map(function (c) {
+      return '<div class="collection-item" data-col-id="' + c.id + '">' +
+        '<div>' +
+          '<strong>' + esc(c.name) + '</strong>' +
+          '<small>' + (c.movies || []).length + ' movies</small>' +
+        '</div>' +
+        '<div class="collection-actions">' +
+          '<button data-view-col="' + c.id + '">View</button>' +
+          '<button class="danger" data-del-col="' + c.id + '">Delete</button>' +
+        '</div>' +
+      '</div>';
+    }).join("");
+
+    // Bind actions
+    list.querySelectorAll("[data-del-col]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const id = btn.dataset.delCol;
+        if (!confirm("Delete this collection?")) return;
+        state.collections = state.collections.filter(function (c) { return c.id !== id; });
+        saveCollections();
+        renderCollectionsList();
+        toast("Collection deleted");
+      });
+    });
+
+    list.querySelectorAll("[data-view-col]").forEach(function (btn) {
+      btn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        const id = btn.dataset.viewCol;
+        viewCollection(id);
+      });
+    });
+  }
+
+  function viewCollection(id) {
+    const col = state.collections.find(function (c) { return c.id === id; });
+    if (!col) return;
+
+    if (!col.movies || col.movies.length === 0) {
+      toast("Collection is empty");
+      return;
+    }
+
+    const names = col.movies.map(function (mid) {
+      const m = state.vault.find(function (v) { return v.id === mid; });
+      return m ? "• " + m.title : "";
+    }).filter(Boolean).join("\n");
+
+    alert("📚 " + col.name + "\n\n" + names);
+  }
+
+  function saveCollections() {
+    try { localStorage.setItem(KEYS.COLLECTIONS, JSON.stringify(state.collections)); } catch (e) {}
+  }
+
+  function bindCollections() {
+    // Open collections modal
+    const openBtn = $("collectionsBtn");
+    if (openBtn) {
+      openBtn.addEventListener("click", function () {
+        renderCollectionsList();
+        const modal = $("collectionsModal");
+        if (modal) { modal.classList.add("on"); modal.setAttribute("aria-hidden", "false"); }
+        document.body.style.overflow = "hidden";
+      });
+    }
+
+    // Close
+    const closeBtn = $("collectionsClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        const modal = $("collectionsModal");
+        if (modal) { modal.classList.remove("on"); modal.setAttribute("aria-hidden", "true"); }
+        document.body.style.overflow = "";
+      });
+    }
+    const modal = $("collectionsModal");
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+          modal.classList.remove("on");
+          modal.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+        }
+      });
+    }
+
+    // Create new collection
+    const newBtn = $("newCollectionBtn");
+    if (newBtn) {
+      newBtn.addEventListener("click", function () {
+        const input = $("newCollectionName");
+        const name = input ? input.value.trim() : "";
+        if (!name) return;
+
+        state.collections.push({
+          id: "col-" + Date.now(),
+          name: name,
+          movies: [],
+          createdAt: Date.now()
+        });
+        saveCollections();
+        if (input) input.value = "";
+        renderCollectionsList();
+        toast("✓ Collection created");
+      });
+    }
+
+    // Enter key on input
+    const input = $("newCollectionName");
+    if (input) {
+      input.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") { e.preventDefault(); newBtn && newBtn.click(); }
+      });
+    }
+
+    // "Add to Collection" button in movie modal
+    const addBtn = $("btnAddToCollection");
+    if (addBtn) {
+      addBtn.addEventListener("click", function () {
+        if (!state.modalId) return;
+        openAddToCollection();
+      });
+    }
+
+    // Add-to-collection modal close
+    const atcClose = $("addToCollectionClose");
+    if (atcClose) {
+      atcClose.addEventListener("click", closeAddToCollection);
+    }
+    const atcModal = $("addToCollectionModal");
+    if (atcModal) {
+      atcModal.addEventListener("click", function (e) {
+        if (e.target === atcModal) closeAddToCollection();
+      });
+    }
+  }
+
+  function openAddToCollection() {
+    state.addToCollectionMovieId = state.modalId;
+    const modal = $("addToCollectionModal");
+    const list = $("addToCollectionList");
+    if (!modal || !list) return;
+
+    if (state.collections.length === 0) {
+      list.innerHTML = '<p style="text-align:center;padding:20px;color:var(--text-dim);font-size:.82rem">No collections yet. Create one first from the header (📚).</p>';
+    } else {
+      list.innerHTML = state.collections.map(function (c) {
+        const has = (c.movies || []).indexOf(state.addToCollectionMovieId) !== -1;
+        return '<div class="pick-item ' + (has ? 'on' : '') + '" data-pick-col="' + c.id + '">' +
+          '<span>' + esc(c.name) + '</span>' +
+          '<span>' + (has ? '✓' : '+') + '</span>' +
+        '</div>';
+      }).join("");
+
+      list.querySelectorAll("[data-pick-col]").forEach(function (item) {
+        item.addEventListener("click", function () {
+          const colId = item.dataset.pickCol;
+          toggleMovieInCollection(colId, state.addToCollectionMovieId);
+          openAddToCollection(); // re-render
+        });
+      });
+    }
+
+    modal.classList.add("on");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeAddToCollection() {
+    const modal = $("addToCollectionModal");
+    if (modal) {
+      modal.classList.remove("on");
+      modal.setAttribute("aria-hidden", "true");
+    }
+    document.body.style.overflow = "";
+    state.addToCollectionMovieId = null;
+  }
+
+  function toggleMovieInCollection(colId, movieId) {
+    const col = state.collections.find(function (c) { return c.id === colId; });
+    if (!col) return;
+    if (!Array.isArray(col.movies)) col.movies = [];
+
+    const idx = col.movies.indexOf(movieId);
+    if (idx === -1) {
+      col.movies.push(movieId);
+      toast("✓ Added to " + col.name);
+    } else {
+      col.movies.splice(idx, 1);
+      toast("Removed from " + col.name);
+    }
+    saveCollections();
+  }
+
+  /* =========================================================
+     STATISTICS DASHBOARD
+  ========================================================== */
+  function openStats() {
+    const modal = $("statsModal");
+    if (!modal) return;
+
+    const vault = state.vault;
+    const watched = vault.filter(function (m) { return m.status === "watched"; });
+
+    // Total movies
+    const totalMoviesEl = $("dashTotalMovies");
+    if (totalMoviesEl) totalMoviesEl.textContent = vault.length;
+
+    // Total hours
+    const totalMin = watched.reduce(function (sum, m) { return sum + (m.runtime || 0); }, 0);
+    const totalHoursEl = $("dashTotalHours");
+    if (totalHoursEl) totalHoursEl.textContent = Math.round(totalMin / 60);
+
+    // Avg rating
+    const rated = vault.filter(function (m) { return m.userRating > 0; });
+    const avg = rated.length > 0
+      ? (rated.reduce(function (s, m) { return s + m.userRating; }, 0) / rated.length).toFixed(1)
+      : "0.0";
+    const avgEl = $("dashAvgRating");
+    if (avgEl) avgEl.textContent = avg;
+
+    // Top genre
+    const genreCount = {};
+    vault.forEach(function (m) {
+      if (!m.genre) return;
+      m.genre.split(",").forEach(function (g) {
+        g = g.trim();
+        if (!g) return;
+        genreCount[g] = (genreCount[g] || 0) + 1;
+      });
+    });
+    const sortedGenres = Object.entries(genreCount).sort(function (a, b) { return b[1] - a[1]; });
+    const topGenreEl = $("dashTopGenre");
+    if (topGenreEl) topGenreEl.textContent = sortedGenres.length > 0 ? sortedGenres[0][0] : "—";
+
+    // Genre bars
+    renderGenreBars(sortedGenres);
+
+    // Yearly chart
+    renderYearlyChart(vault);
+
+    modal.classList.add("on");
+    modal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+
+  function renderGenreBars(sortedGenres) {
+    const el = $("genreBars");
+    if (!el) return;
+
+    if (sortedGenres.length === 0) {
+      el.innerHTML = '<p style="color:var(--text-dim);font-size:.8rem">No genre data yet.</p>';
+      return;
+    }
+
+    const max = sortedGenres[0][1];
+    el.innerHTML = sortedGenres.slice(0, 8).map(function (entry) {
+      const name = entry[0];
+      const count = entry[1];
+      const pct = (count / max) * 100;
+      return '<div class="genre-bar">' +
+        '<span class="g-name">' + esc(name) + '</span>' +
+        '<div class="g-track"><div class="g-fill" style="width:' + pct + '%"></div></div>' +
+        '<span class="g-count">' + count + '</span>' +
+      '</div>';
+    }).join("");
+  }
+
+  function renderYearlyChart(vault) {
+    const el = $("yearlyChart");
+    if (!el) return;
+
+    // Group by year of addition
+    const byYear = {};
+    vault.forEach(function (m) {
+      if (!m.addedAt) return;
+      const y = new Date(m.addedAt).getFullYear();
+      byYear[y] = (byYear[y] || 0) + 1;
+    });
+
+    const years = Object.keys(byYear).sort();
+    if (years.length === 0) {
+      el.innerHTML = '<p style="color:var(--text-dim);font-size:.8rem;margin:auto">No data yet.</p>';
+      return;
+    }
+
+    const max = Math.max.apply(null, Object.values(byYear));
+
+    el.innerHTML = years.map(function (y) {
+      const count = byYear[y];
+      const pct = (count / max) * 100;
+      return '<div class="year-bar">' +
+        '<div class="y-fill" style="height:' + pct + '%" title="' + count + ' movies"></div>' +
+        '<div class="y-label">' + y + '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function bindStats() {
+    const openBtn = $("statsBtn");
+    if (openBtn) openBtn.addEventListener("click", openStats);
+
+    const closeBtn = $("statsClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        const m = $("statsModal");
+        if (m) { m.classList.remove("on"); m.setAttribute("aria-hidden", "true"); }
+        document.body.style.overflow = "";
+      });
+    }
+    const modal = $("statsModal");
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+          modal.classList.remove("on");
+          modal.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+        }
+      });
+    }
+  }
+
+  /* =========================================================
+     ACHIEVEMENTS
+  ========================================================== */
+  function checkAchievements() {
+    let changed = false;
+
+    CFG.ACHIEVEMENTS_LIST.forEach(function (ach) {
+      if (state.achievements[ach.id]) return; // already unlocked
+
+      let unlocked = false;
+      try { unlocked = ach.check(state.vault); } catch (e) { unlocked = false; }
+
+      if (unlocked) {
+        state.achievements[ach.id] = Date.now();
+        changed = true;
+        toast("🏆 " + ach.name + " unlocked!");
+      }
+    });
+
+    if (changed) {
+      try { localStorage.setItem(KEYS.ACHIEVEMENTS, JSON.stringify(state.achievements)); } catch (e) {}
+    }
+  }
+
+  function renderAchievements() {
+    const grid = $("achievementsGrid");
+    if (!grid) return;
+
+    grid.innerHTML = CFG.ACHIEVEMENTS_LIST.map(function (ach) {
+      const unlocked = !!state.achievements[ach.id];
+      return '<div class="achievement ' + (unlocked ? 'unlocked' : 'locked') + '">' +
+        '<span class="ach-icon">' + ach.icon + '</span>' +
+        '<div class="ach-name">' + esc(ach.name) + '</div>' +
+        '<div class="ach-desc">' + esc(ach.desc) + '</div>' +
+      '</div>';
+    }).join("");
+  }
+
+  function bindAchievements() {
+    const openBtn = $("achievementsBtn");
+    if (openBtn) {
+      openBtn.addEventListener("click", function () {
+        renderAchievements();
+        const m = $("achievementsModal");
+        if (m) { m.classList.add("on"); m.setAttribute("aria-hidden", "false"); }
+        document.body.style.overflow = "hidden";
+      });
+    }
+
+    const closeBtn = $("achievementsClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        const m = $("achievementsModal");
+        if (m) { m.classList.remove("on"); m.setAttribute("aria-hidden", "true"); }
+        document.body.style.overflow = "";
+      });
+    }
+    const modal = $("achievementsModal");
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+          modal.classList.remove("on");
+          modal.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+        }
+      });
+    }
+  }
+
+  /* =========================================================
+     WATCH CALENDAR
+  ========================================================== */
+  function renderCalendar() {
+    const grid = $("calendarGrid");
+    const sub = $("calendarSubtitle");
+    if (!grid) return;
+
+    const year = new Date().getFullYear();
+    if (sub) sub.textContent = year + " · " + Object.values(state.watchHistory).reduce(function (a, b) { return a + b; }, 0) + " movies watched";
+
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31);
+
+    // Align start to Monday
+    const startDay = start.getDay(); // 0=Sun
+    const offset = (startDay + 6) % 7;
+
+    let html = "";
+    // Padding
+    for (let i = 0; i < offset; i++) {
+      html += '<div class="cal-day" style="opacity:0"></div>';
+    }
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = d.getFullYear() + "-" +
+                  String(d.getMonth() + 1).padStart(2, "0") + "-" +
+                  String(d.getDate()).padStart(2, "0");
+      const count = state.watchHistory[key] || 0;
+
+      let level = 0;
+      if (count >= 1 && count <= 2) level = 1;
+      else if (count <= 4) level = 2;
+      else if (count <= 6) level = 3;
+      else if (count > 6) level = 4;
+
+      const dCopy = new Date(d);
+      html += '<div class="cal-day" data-level="' + level + '" title="' + key + ' — ' + count + ' movies"></div>';
+    }
+
+    grid.innerHTML = html;
+  }
+
+  function bindCalendar() {
+    const openBtn = $("calendarBtn");
+    if (openBtn) {
+      openBtn.addEventListener("click", function () {
+        renderCalendar();
+        const m = $("calendarModal");
+        if (m) { m.classList.add("on"); m.setAttribute("aria-hidden", "false"); }
+        document.body.style.overflow = "hidden";
+      });
+    }
+    const closeBtn = $("calendarClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        const m = $("calendarModal");
+        if (m) { m.classList.remove("on"); m.setAttribute("aria-hidden", "true"); }
+        document.body.style.overflow = "";
+      });
+    }
+    const modal = $("calendarModal");
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+          modal.classList.remove("on");
+          modal.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+        }
+      });
+    }
+  }
+
+  /* =========================================================
+     SHARE
+  ========================================================== */
+  function buildShareText() {
+    const vault = state.vault;
+    const watched = vault.filter(function (m) { return m.status === "watched"; }).length;
+    const favorites = vault.filter(function (m) { return m.favorite; }).length;
+
+    let text = "🎬 My CineVault\n";
+    text += "━━━━━━━━━━━━━━\n";
+    text += "📊 " + vault.length + " movies in vault\n";
+    text += "✅ " + watched + " watched\n";
+    text += "❤️ " + favorites + " favorites\n\n";
+
+    if (favorites > 0) {
+      text += "⭐ My Favorite Movies:\n";
+      vault.filter(function (m) { return m.favorite; }).slice(0, 5).forEach(function (m) {
+        text += "• " + m.title + " (" + m.year + ")\n";
+      });
+      text += "\n";
+    }
+
+    text += "Powered by CineVault 🎬";
+    return text;
+  }
+
+  function bindShare() {
+    const btn = $("shareBtn");
+    if (btn) {
+      btn.addEventListener("click", function () {
+        const preview = $("sharePreview");
+        if (preview) preview.textContent = buildShareText();
+        const m = $("shareModal");
+        if (m) { m.classList.add("on"); m.setAttribute("aria-hidden", "false"); }
+        document.body.style.overflow = "hidden";
+      });
+    }
+
+    const closeBtn = $("shareClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        const m = $("shareModal");
+        if (m) { m.classList.remove("on"); m.setAttribute("aria-hidden", "true"); }
+        document.body.style.overflow = "";
+      });
+    }
+    const modal = $("shareModal");
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+          modal.classList.remove("on");
+          modal.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+        }
+      });
+    }
+
+    // Copy button
+    const copyBtn = $("copyShareBtn");
+    if (copyBtn) {
+      copyBtn.addEventListener("click", function () {
+        const text = buildShareText();
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(text).then(function () {
+            toast("✓ Copied to clipboard");
+          }).catch(function () {
+            fallbackCopy(text);
+          });
+        } else {
+          fallbackCopy(text);
+        }
+      });
+    }
+
+    // Native share
+    const nativeBtn = $("shareNativeBtn");
+    if (nativeBtn) {
+      nativeBtn.addEventListener("click", function () {
+        const text = buildShareText();
+        if (navigator.share) {
+          navigator.share({
+            title: "My CineVault",
+            text: text
+          }).catch(function () { /* ignore */ });
+        } else {
+          toast("Device share not supported", true);
+        }
+      });
+    }
+  }
+
+  function fallbackCopy(text) {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand("copy");
+      toast("✓ Copied to clipboard");
+    } catch (e) {
+      toast("Copy failed", true);
+    }
+    document.body.removeChild(ta);
+  }
+
+  /* =========================================================
+     EXPORT DATA
+  ========================================================== */
+  function bindExport() {
+    const btn = $("exportBtn");
+    if (!btn) return;
+
+    btn.addEventListener("click", function () {
+      const payload = {
+        app: "CineVault",
+        version: CFG.APP_CONFIG.version,
+        exportedAt: new Date().toISOString(),
+        vault: state.vault,
+        collections: state.collections,
+        achievements: state.achievements,
+        watchHistory: state.watchHistory
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "cinevault-backup-" + Date.now() + ".json";
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      toast("✓ Data exported");
+    });
+  }
+
+  /* =========================================================
+     ADVANCED FILTERS
+  ========================================================== */
+  function bindAdvancedFilters() {
+    const openBtn = $("advancedFilterBtn");
+    if (openBtn) {
+      openBtn.addEventListener("click", function () {
+        // Pre-fill current filters
+        setVal("filterGenre", state.advancedFilters.genre);
+        setVal("filterMinYear", state.advancedFilters.minYear);
+        setVal("filterMaxYear", state.advancedFilters.maxYear);
+        setVal("filterMinRating", state.advancedFilters.minRating);
+        setVal("filterRuntime", state.advancedFilters.runtime);
+
+        const m = $("advancedFilterModal");
+        if (m) { m.classList.add("on"); m.setAttribute("aria-hidden", "false"); }
+        document.body.style.overflow = "hidden";
+      });
+    }
+
+    const closeBtn = $("advancedFilterClose");
+    if (closeBtn) {
+      closeBtn.addEventListener("click", function () {
+        const m = $("advancedFilterModal");
+        if (m) { m.classList.remove("on"); m.setAttribute("aria-hidden", "true"); }
+        document.body.style.overflow = "";
+      });
+    }
+    const modal = $("advancedFilterModal");
+    if (modal) {
+      modal.addEventListener("click", function (e) {
+        if (e.target === modal) {
+          modal.classList.remove("on");
+          modal.setAttribute("aria-hidden", "true");
+          document.body.style.overflow = "";
+        }
+      });
+    }
+
+    const applyBtn = $("applyAdvancedFilter");
+    if (applyBtn) {
+      applyBtn.addEventListener("click", function () {
+        state.advancedFilters.genre = getVal("filterGenre").trim();
+        state.advancedFilters.minYear = parseInt(getVal("filterMinYear")) || null;
+        state.advancedFilters.maxYear = parseInt(getVal("filterMaxYear")) || null;
+        state.advancedFilters.minRating = parseInt(getVal("filterMinRating")) || null;
+        state.advancedFilters.runtime = getVal("filterRuntime");
+
+        if (window.CV_APP && window.CV_APP.renderMovies) window.CV_APP.renderMovies();
+
+        const m = $("advancedFilterModal");
+        if (m) { m.classList.remove("on"); m.setAttribute("aria-hidden", "true"); }
+        document.body.style.overflow = "";
+        toast("✓ Filters applied");
+      });
+    }
+
+    const clearBtn = $("clearAdvancedFilter");
+    if (clearBtn) {
+      clearBtn.addEventListener("click", function () {
+        state.advancedFilters = { genre: "", minYear: null, maxYear: null, minRating: null, runtime: "" };
+        setVal("filterGenre", ""); setVal("filterMinYear", "");
+        setVal("filterMaxYear", ""); setVal("filterMinRating", "");
+        setVal("filterRuntime", "");
+
+        if (window.CV_APP && window.CV_APP.renderMovies) window.CV_APP.renderMovies();
+
+        const m = $("advancedFilterModal");
+        if (m) { m.classList.remove("on"); m.setAttribute("aria-hidden", "true"); }
+        document.body.style.overflow = "";
+        toast("Filters cleared");
+      });
+    }
+  }
+
+  function setVal(id, val) {
+    const el = $(id);
+    if (el) el.value = val || "";
+  }
+
+  function getVal(id) {
+    const el = $(id);
+    return el ? (el.value || "") : "";
+  }
+
+  /* =========================================================
+     RANDOM PICK
+  ========================================================== */
+  function bindRandom() {
+    const btn = $("heroRandomBtn");
+    if (!btn) return;
+
+    btn.addEventListener("click", function () {
+      const want = state.vault.filter(function (m) { return m.status === "want" || m.status === "watching"; });
+      if (want.length === 0) {
+        toast("No unwatched movies in vault", true);
+        return;
+      }
+      const pick = want[Math.floor(Math.random() * want.length)];
+      if (window.CV_APP && window.CV_APP.openModal) window.CV_APP.openModal(pick.id);
+      toast("🎲 Random pick: " + pick.title);
+    });
+  }
+
+  /* =========================================================
+     PER-MOVIE SHARE
+  ========================================================== */
+  function bindMovieShare() {
+    const btn = $("btnShareMovie");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      const m = state.vault.find(function (v) { return v.id === state.modalId; });
+      if (!m) return;
+      const text = "🎬 " + m.title + " (" + m.year + ")" +
+                   (m.tmdbRating ? "\n⭐ TMDB: " + Number(m.tmdbRating).toFixed(1) : "") +
+                   (m.genre ? "\n🎭 " + m.genre : "") +
+                   "\n\nShared from CineVault";
+
+      if (navigator.share) {
+        navigator.share({ title: m.title, text: text }).catch(function () {});
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function () {
+          toast("✓ Copied to clipboard");
+        });
+      } else {
+        fallbackCopy(text);
+      }
+    });
+  }
+
+  /* =========================================================
+     INIT
+  ========================================================== */
+  function init() {
+    bindStarRating();
+    bindCollections();
+    bindStats();
+    bindAchievements();
+    bindCalendar();
+    bindShare();
+    bindExport();
+    bindAdvancedFilters();
+    bindRandom();
+    bindMovieShare();
+
+    // Initial achievement check
+    setTimeout(checkAchievements, 1000);
+
+    console.log("🎬 CineVault Features module loaded");
+    console.log("   ⭐ Star rating, 📚 Collections, 📊 Stats, 🏆 Achievements");
+    console.log("   📅 Calendar, 🔗 Share, ⬇ Export, 💡 Recommendations");
+  }
+
+  /* =========================================================
+     EXPORTS
+  ========================================================== */
+  window.CV_FEATURES = {
+    init: init,
+    setStars: setStars,
+    loadSimilar: loadSimilar,
+    checkAchievements: checkAchievements,
+    renderCollectionsList: renderCollectionsList,
+    saveCollections: saveCollections,
+    openStats: openStats,
+    renderCalendar: renderCalendar,
+    buildShareText: buildShareText
+  };
+
+  // Auto-init
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    setTimeout(init, 100);
+  }
+
+})();
