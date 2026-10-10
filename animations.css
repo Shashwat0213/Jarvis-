@@ -1,0 +1,764 @@
+/* =========================================================
+   CINEVAULT — ANIMATIONS
+   All motion, transitions, keyframes, and effects
+========================================================= */
+
+/* =========================================================
+   1. CARD ENTRANCE
+========================================================= */
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.movie {
+  animation: cardIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+  will-change: transform, opacity;
+}
+
+/* Stagger delays applied via JS using style.animationDelay */
+
+/* =========================================================
+   2. RESULT ITEM ENTRANCE (search dropdown)
+========================================================= */
+@keyframes resultIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.result-item {
+  animation: resultIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* =========================================================
+   3. DROPDOWN SLIDE
+========================================================= */
+@keyframes dropIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.results-drop.open {
+  animation: dropIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   4. MODAL SLIDE
+========================================================= */
+@keyframes modalSlide {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal.on .modal-box {
+  animation: modalSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   5. HEART PULSE (favorite)
+========================================================= */
+@keyframes heartPulse {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.4); }
+  50% { transform: scale(0.95); }
+  75% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.btn-fav.on {
+  animation: heartPulse 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   6. HEART BURST (particle effect via JS)
+========================================================= */
+.heart-particle {
+  position: fixed;
+  pointer-events: none;
+  font-size: 16px;
+  z-index: 99999;
+  animation: heartBurst 0.8s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes heartBurst {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   7. PROGRESS SHIMMER
+========================================================= */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.progress-fill {
+  background: linear-gradient(
+    90deg,
+    var(--primary) 0%,
+    var(--accent) 50%,
+    var(--primary) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease infinite;
+}
+
+/* =========================================================
+   8. STAT PULSE (when count changes)
+========================================================= */
+@keyframes statPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); color: #fff; }
+  100% { transform: scale(1); }
+}
+
+.stat-num.pulse {
+  animation: statPulse 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   9. HERO FLOATING ELEMENTS
+========================================================= */
+@keyframes floatPulse {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.hero-eyebrow {
+  animation: floatPulse 3s ease-in-out infinite;
+}
+
+/* =========================================================
+   10. HERO PARALLAX (mouse move effect)
+========================================================= */
+.hero {
+  --mouse-x: 0px;
+  --mouse-y: 0px;
+  transition: transform 0.3s ease;
+}
+
+.hero::before {
+  transform: translate(var(--mouse-x), var(--mouse-y));
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   11. INPUT FOCUS GLOW
+========================================================= */
+@keyframes inputGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 15%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+}
+
+.search-input:focus {
+  animation: inputGlow 2s ease infinite;
+}
+
+/* =========================================================
+   12. SCROLL REVEAL
+========================================================= */
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition:
+    opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.reveal.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* =========================================================
+   13. TOAST BOUNCE
+========================================================= */
+@keyframes toastBounce {
+  0% {
+    transform: translateX(-50%) translateY(120px);
+  }
+  60% {
+    transform: translateX(-50%) translateY(-8px);
+  }
+  80% {
+    transform: translateX(-50%) translateY(2px);
+  }
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.toast.on {
+  animation: toastBounce 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   14. BUTTON HOVER LIFT
+========================================================= */
+.btn,
+.chip,
+.mbtn,
+.status-pick,
+.poster-action {
+  will-change: transform;
+}
+
+.btn:active,
+.chip:active,
+.mbtn:active,
+.status-pick:active {
+  transform: scale(0.97);
+}
+
+/* =========================================================
+   15. POSTER HOVER GLOW
+========================================================= */
+@keyframes posterGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+  50% {
+    box-shadow: 0 0 30px color-mix(in srgb, var(--primary) 40%, transparent);
+  }
+}
+
+.movie:hover .movie-poster {
+  animation: posterGlow 2s ease-in-out infinite;
+}
+
+/* =========================================================
+   16. LOADING SKELETON
+========================================================= */
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    color-mix(in srgb, var(--surface-2) 60%, var(--surface)) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+/* Poster skeleton */
+.movie-poster.loading {
+  background: linear-gradient(
+    90deg,
+    var(--surface-2) 0%,
+    color-mix(in srgb, var(--surface-2) 60%, var(--surface)) 50%,
+    var(--surface-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s ease-in-out infinite;
+}
+
+.movie-poster.loading img {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.movie-poster.loaded img {
+  opacity: 1;
+}
+
+/* =========================================================
+   17. FLOATING ACTION BADGES
+========================================================= */
+@keyframes badgeBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.badge-status {
+  animation: badgeBounce 2s ease-in-out infinite;
+}
+
+/* =========================================================
+   18. STAR RATING ANIMATION
+========================================================= */
+@keyframes starPop {
+  0% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.4) rotate(15deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.star.on {
+  animation: starPop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   19. CONFETTI FALL
+========================================================= */
+@keyframes confettiFall {
+  0% {
+    transform: translateY(-10px) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.confetti-piece {
+  position: fixed;
+  top: -20px;
+  width: 8px;
+  height: 14px;
+  pointer-events: none;
+  z-index: 99999;
+  animation: confettiFall 2.5s linear forwards;
+}
+
+/* =========================================================
+   20. ACHIEVEMENT UNLOCK
+========================================================= */
+@keyframes achUnlock {
+  0% {
+    transform: scale(0.5) rotate(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1) rotate(5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.achievement.unlocked {
+  animation: achUnlock 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* =========================================================
+   21. CALENDAR CELL HOVER
+========================================================= */
+.cal-day {
+  will-change: transform;
+}
+
+/* =========================================================
+   22. SMOOTH BAR FILL
+========================================================= */
+@keyframes barFill {
+  from { width: 0%; }
+}
+
+.genre-bar .g-fill {
+  animation: barFill 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes yearBarFill {
+  from { height: 0; }
+}
+
+.year-bar .y-fill {
+  animation: yearBarFill 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* =========================================================
+   23. CLOUD STATUS PULSE
+========================================================= */
+@keyframes cloudPulse {
+  0%, 100% { opacity: 0.85; }
+  50% { opacity: 1; }
+}
+
+.cloud-status.on {
+  animation: cloudPulse 2s ease-in-out infinite;
+}
+
+/* =========================================================
+   24. SPINNER DOTS
+========================================================= */
+@keyframes dotBounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.5;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.loading-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--primary);
+  animation: dotBounce 1.2s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(1) { animation-delay: 0s; }
+.loading-dots span:nth-child(2) { animation-delay: 0.15s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.3s; }
+
+/* =========================================================
+   25. RIPPLE EFFECT (buttons)
+========================================================= */
+.btn,
+.mbtn,
+.status-pick {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0);
+  animation: rippleExpand 0.6s ease-out;
+  pointer-events: none;
+}
+
+@keyframes rippleExpand {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+   26. GLITCH TEXT (hero title on hover)
+========================================================= */
+@keyframes glitch {
+  0%, 100% {
+    transform: translate(0);
+  }
+  20% {
+    transform: translate(-2px, 2px);
+  }
+  40% {
+    transform: translate(-2px, -2px);
+  }
+  60% {
+    transform: translate(2px, 2px);
+  }
+  80% {
+    transform: translate(2px, -2px);
+  }
+}
+
+.hero-title:hover .accent {
+  animation: glitch 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   27. FADE IN UP (generic utility)
+========================================================= */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* =========================================================
+   28. FADE IN (generic utility)
+========================================================= */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease both;
+}
+
+/* =========================================================
+   29. SCALE IN (generic utility)
+========================================================= */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.scale-in {
+  animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* =========================================================
+   30. NUMBER COUNT UP (JS-driven, transition on text)
+========================================================= */
+.stat-num {
+  transition: color 0.3s ease, transform 0.2s ease;
+}
+
+/* =========================================================
+   31. NOTIFICATION SLIDE IN
+========================================================= */
+@keyframes notifSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.notification {
+  animation: notifSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* =========================================================
+   32. LOADING SPINNER (generic)
+========================================================= */
+@keyframes spinnerSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spinnerSpin 0.8s linear infinite;
+}
+
+/* =========================================================
+   33. COLOR PULSE (loading state)
+========================================================= */
+@keyframes colorPulse {
+  0%, 100% { color: var(--primary); }
+  50% { color: var(--accent); }
+}
+
+.color-pulse {
+  animation: colorPulse 1.5s ease-in-out infinite;
+}
+
+/* =========================================================
+   34. PREFERS-REDUCED-MOTION
+   Disable heavy animations for accessibility
+========================================================= */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .progress-fill,
+  .badge-status,
+  .cloud-status.on,
+  .hero-eyebrow {
+    animation: none !important;
+  }
+}
+
+/* =========================================================
+   35. PERFORMANCE HINTS
+========================================================= */
+.movie,
+.movie-poster img,
+.result-item,
+.btn,
+.chip {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Smooth will-change for frequently animated elements */
+.movie:hover {
+  will-change: transform, box-shadow;
+}
+
+.search-input:focus {
+  will-change: box-shadow, border-color;
+}
+
+/* =========================================================
+   36. CUSTOM KEYFRAME: POP-IN BADGE
+========================================================= */
+@keyframes popIn {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pop-in {
+  animation: popIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* =========================================================
+   37. ATTENTION SHAKE (validation errors)
+========================================================= */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(6px); }
+  60% { transform: translateX(-4px); }
+  80% { transform: translateX(4px); }
+}
+
+.shake {
+  animation: shake 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* =========================================================
+   38. GRADIENT BORDER ANIMATION (premium effect)
+========================================================= */
+@keyframes gradientBorder {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.gradient-border {
+  position: relative;
+  background: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--accent),
+    var(--primary-2),
+    var(--accent-2),
+    var(--primary)
+  );
+  background-size: 300% 100%;
+  animation: gradientBorder 4s ease infinite;
+  padding: 2px;
+  border-radius: inherit;
+}
+
+.gradient-border > * {
+  border-radius: inherit;
+}
+
+/* =========================================================
+   39. FLOATING PARTICLES (background ambience)
+========================================================= */
+@keyframes particleFloat {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% { opacity: 0.4; }
+  90% { opacity: 0.4; }
+  100% {
+    transform: translateY(-100vh) translateX(50px);
+    opacity: 0;
+  }
+}
+
+.float-particle {
+  position: fixed;
+  bottom: -20px;
+  width: 4px;
+  height: 4px;
+  background: var(--primary);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+  animation: particleFloat linear infinite;
+  box-shadow: 0 0 6px var(--primary);
+}
+
+/* =========================================================
+   40. TEXT GRADIENT SHIFT
+========================================================= */
+@keyframes textGradientShift {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.text-gradient-anim {
+  background: linear-gradient(
+    90deg,
+    var(--primary),
+    var(--accent),
+    var(--accent-2),
+    var(--primary)
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: textGradientShift 4s linear infinite;
+}
