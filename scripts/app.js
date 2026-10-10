@@ -1,6 +1,5 @@
 /* =========================================================
    CINEVAULT — APP (Main Logic)
-   Search, render, filter, modals, events, init
 ========================================================= */
 
 (function () {
@@ -18,9 +17,6 @@
   const $ = function (id) { return document.getElementById(id); };
   const KEYS = CFG.STORAGE_KEYS;
 
-  /* =========================================================
-     UTILITIES
-  ========================================================== */
   function esc(s) {
     return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -56,13 +52,9 @@
     };
   }
 
-  /* =========================================================
-     STORAGE
-  ========================================================== */
   function saveVault() {
     try { localStorage.setItem(KEYS.VAULT, JSON.stringify(state.vault)); } catch (e) {}
   }
-
   function loadVault() {
     try {
       const raw = localStorage.getItem(KEYS.VAULT);
@@ -70,11 +62,9 @@
       if (!Array.isArray(state.vault)) state.vault = [];
     } catch (e) { state.vault = []; }
   }
-
   function saveCollections() {
     try { localStorage.setItem(KEYS.COLLECTIONS, JSON.stringify(state.collections)); } catch (e) {}
   }
-
   function loadCollections() {
     try {
       const raw = localStorage.getItem(KEYS.COLLECTIONS);
@@ -82,22 +72,18 @@
       if (!Array.isArray(state.collections)) state.collections = [];
     } catch (e) { state.collections = []; }
   }
-
   function saveAchievements() {
     try { localStorage.setItem(KEYS.ACHIEVEMENTS, JSON.stringify(state.achievements)); } catch (e) {}
   }
-
   function loadAchievements() {
     try {
       const raw = localStorage.getItem(KEYS.ACHIEVEMENTS);
       state.achievements = raw ? JSON.parse(raw) : {};
     } catch (e) { state.achievements = {}; }
   }
-
   function saveWatchHistory() {
     try { localStorage.setItem(KEYS.WATCH_HISTORY, JSON.stringify(state.watchHistory)); } catch (e) {}
   }
-
   function loadWatchHistory() {
     try {
       const raw = localStorage.getItem(KEYS.WATCH_HISTORY);
@@ -105,20 +91,15 @@
     } catch (e) { state.watchHistory = {}; }
   }
 
-  /* =========================================================
-     FILTERED LIST
-  ========================================================== */
   function getFiltered() {
     let list = state.vault.slice();
 
-    // Status/favorite filter
     if (state.currentFilter === "favorites") {
       list = list.filter(function (m) { return m.favorite; });
     } else if (state.currentFilter !== "all") {
       list = list.filter(function (m) { return m.status === state.currentFilter; });
     }
 
-    // Text search (in-vault)
     if (state.currentQuery && state.currentQuery.length >= 2) {
       const q = state.currentQuery.toLowerCase();
       list = list.filter(function (m) {
@@ -128,7 +109,6 @@
       });
     }
 
-    // Advanced filters
     const af = state.advancedFilters;
     if (af.genre) {
       const g = af.genre.toLowerCase();
@@ -136,47 +116,30 @@
         return (m.genre || "").toLowerCase().indexOf(g) !== -1;
       });
     }
-    if (af.minYear) {
-      list = list.filter(function (m) { return parseInt(m.year) >= af.minYear; });
-    }
-    if (af.maxYear) {
-      list = list.filter(function (m) { return parseInt(m.year) <= af.maxYear; });
-    }
-    if (af.minRating) {
-      list = list.filter(function (m) { return (m.userRating || 0) >= af.minRating; });
-    }
+    if (af.minYear) list = list.filter(function (m) { return parseInt(m.year) >= af.minYear; });
+    if (af.maxYear) list = list.filter(function (m) { return parseInt(m.year) <= af.maxYear; });
+    if (af.minRating) list = list.filter(function (m) { return (m.userRating || 0) >= af.minRating; });
     if (af.runtime) {
       list = list.filter(function (m) {
         const r = m.runtime || 0;
-        if (af.runtime === "short")  return r > 0 && r < 100;
+        if (af.runtime === "short") return r > 0 && r < 100;
         if (af.runtime === "medium") return r >= 100 && r <= 150;
-        if (af.runtime === "long")   return r > 150;
+        if (af.runtime === "long") return r > 150;
         return true;
       });
     }
 
-    // Sort
     const s = state.currentSort;
-    if (s === "recent") {
-      list.sort(function (a, b) { return (b.addedAt || 0) - (a.addedAt || 0); });
-    } else if (s === "title") {
-      list.sort(function (a, b) { return a.title.localeCompare(b.title); });
-    } else if (s === "year") {
-      list.sort(function (a, b) { return (parseInt(b.year) || 0) - (parseInt(a.year) || 0); });
-    } else if (s === "rating") {
-      list.sort(function (a, b) { return (b.userRating || 0) - (a.userRating || 0); });
-    } else if (s === "tmdb") {
-      list.sort(function (a, b) { return (b.tmdbRating || 0) - (a.tmdbRating || 0); });
-    } else if (s === "runtime") {
-      list.sort(function (a, b) { return (b.runtime || 0) - (a.runtime || 0); });
-    }
+    if (s === "recent") list.sort(function (a, b) { return (b.addedAt || 0) - (a.addedAt || 0); });
+    else if (s === "title") list.sort(function (a, b) { return a.title.localeCompare(b.title); });
+    else if (s === "year") list.sort(function (a, b) { return (parseInt(b.year) || 0) - (parseInt(a.year) || 0); });
+    else if (s === "rating") list.sort(function (a, b) { return (b.userRating || 0) - (a.userRating || 0); });
+    else if (s === "tmdb") list.sort(function (a, b) { return (b.tmdbRating || 0) - (a.tmdbRating || 0); });
+    else if (s === "runtime") list.sort(function (a, b) { return (b.runtime || 0) - (a.runtime || 0); });
 
     return list;
   }
 
-  /* =========================================================
-     RENDER — MOVIE GRID
-  ========================================================== */
   function renderMovies() {
     const list = $("moviesList");
     if (!list) return;
@@ -211,7 +174,7 @@
       html += '<div class="movie-poster loading">';
       html +=   '<img src="' + esc(m.poster) + '" alt="' + esc(m.title) + '" loading="lazy">';
       html +=   '<div class="badge-status">' + statusMeta.label + '</div>';
-      html +=   '<button class="btn-fav ' + (m.favorite ? 'on' : '') + '" data-fav="' + m.id + '" aria-label="Favorite">' + (m.favorite ? '❤️' : '♡') + '</button>';
+      html +=   '<button class="btn-fav ' + (m.favorite ? 'on' : '') + '" data-fav="' + m.id + '">' + (m.favorite ? '❤️' : '♡') + '</button>';
       html += '</div>';
       html += '<div class="movie-body">';
       html +=   '<h3 class="movie-title">' + esc(m.title) + '</h3>';
@@ -239,13 +202,11 @@
         }
       }
 
-      // Card click → open modal
       li.addEventListener("click", function (e) {
         if (e.target.closest("button")) return;
         openModal(m.id);
       });
 
-      // Favorite button
       const favBtn = li.querySelector("[data-fav]");
       if (favBtn) {
         favBtn.addEventListener("click", function (e) {
@@ -258,9 +219,6 @@
     });
   }
 
-  /* =========================================================
-     UPDATE STATS
-  ========================================================== */
   function animateCount(el, target, duration) {
     if (!el) return;
     const start = parseInt(el.textContent) || 0;
@@ -307,9 +265,6 @@
     }
   }
 
-  /* =========================================================
-     FAVORITE / STATUS
-  ========================================================== */
   function heartBurst(originEl) {
     if (!originEl) return;
     const rect = originEl.getBoundingClientRect();
@@ -355,7 +310,6 @@
   function setStatus(id, status) {
     const m = state.vault.find(function (v) { return v.id === id; });
     if (!m) return;
-    const wasWatched = m.status === "watched";
     m.status = status;
     if (status === "watched" && !m.watchedAt) {
       m.watchedAt = Date.now();
@@ -380,9 +334,6 @@
     });
   }
 
-  /* =========================================================
-     ADD MOVIE FROM SEARCH RESULT
-  ========================================================== */
   async function addMovieFromResult(result) {
     if (!result) return;
 
@@ -410,9 +361,6 @@
     if (window.CV_AUTH && window.CV_AUTH.scheduleCloudSave) window.CV_AUTH.scheduleCloudSave();
   }
 
-  /* =========================================================
-     SEARCH DROPDOWN
-  ========================================================== */
   async function renderDropdown(query) {
     const dd = $("resultsDrop");
     const sp = $("searchSpinner");
@@ -493,9 +441,6 @@
     state.highlightIdx = -1;
   }
 
-  /* =========================================================
-     MOVIE MODAL
-  ========================================================== */
   function openModal(id) {
     const m = state.vault.find(function (v) { return v.id === id; });
     if (!m) return;
@@ -525,16 +470,13 @@
     const descEl = $("mDesc");
     if (descEl) descEl.textContent = m.overview || "No description available.";
 
-    // Status buttons
     document.querySelectorAll(".status-pick").forEach(function (b) {
       b.classList.toggle("on", b.dataset.status === m.status);
     });
 
-    // Favorite button state
     const favBtn = $("btnFav");
     if (favBtn) favBtn.textContent = m.favorite ? "❤️ Favorited" : "♡ Favorite";
 
-    // Show/hide trailer/watch/download
     const trailerBtn = $("btnTrailer");
     const watchBtn = $("btnWatch");
     const downloadBtn = $("btnDownload");
@@ -542,16 +484,12 @@
     if (watchBtn) watchBtn.style.display = m.watchUrl ? "" : "none";
     if (downloadBtn) downloadBtn.style.display = m.downloadUrl ? "" : "none";
 
-    // Notes
     const noteEl = $("mNote");
     if (noteEl) noteEl.value = m.notes || "";
 
-    // Star rating
     if (window.CV_FEATURES && window.CV_FEATURES.setStars) {
       window.CV_FEATURES.setStars(m.userRating || 0);
     }
-
-    // Similar movies
     if (window.CV_FEATURES && window.CV_FEATURES.loadSimilar) {
       window.CV_FEATURES.loadSimilar(m.tmdbId);
     }
@@ -574,18 +512,12 @@
     state.modalId = null;
   }
 
-  /* =========================================================
-     EDIT MODAL
-  ========================================================== */
   function openEdit(id) {
     state.editingId = id || null;
     const titleEl = $("editTitle");
     if (titleEl) titleEl.textContent = id ? "Edit Movie" : "Add Movie";
 
-    let data = {
-      title: "", year: "", genre: "", poster: "", overview: "",
-      trailerUrl: "", watchUrl: "", downloadUrl: "", userRating: "", runtime: ""
-    };
+    let data = { title: "", year: "", genre: "", poster: "", overview: "", trailerUrl: "", watchUrl: "", downloadUrl: "", userRating: "", runtime: "" };
 
     if (id) {
       const m = state.vault.find(function (v) { return v.id === id; });
@@ -657,8 +589,6 @@
 
     if (!payload.title) {
       toast("Title is required", true);
-      const el = $("fTitle");
-      if (el) { el.classList.add("shake"); setTimeout(function () { el.classList.remove("shake"); }, 500); el.focus(); }
       return;
     }
 
@@ -678,7 +608,7 @@
       }
       toast("✓ Movie updated");
     } else {
-      const newMovie = {
+      state.vault.unshift({
         id: "cv-manual-" + Date.now(),
         sourceId: "manual-" + Date.now(),
         tmdbId: null,
@@ -702,8 +632,7 @@
         favorite: false,
         addedAt: Date.now(),
         watchedAt: null
-      };
-      state.vault.unshift(newMovie);
+      });
       toast("✓ Movie added to vault");
     }
 
@@ -718,11 +647,7 @@
     return el ? (el.value || "") : "";
   }
 
-  /* =========================================================
-     BIND EVENTS
-  ========================================================== */
   function bindEvents() {
-    // Search input
     const searchInput = $("searchInput");
     if (searchInput) {
       const debouncedSearch = debounce(function (q) { renderDropdown(q); }, CFG.APP_CONFIG.searchDebounce);
@@ -735,12 +660,10 @@
       searchInput.addEventListener("keydown", handleSearchKeydown);
     }
 
-    // Click outside to close dropdown
     document.addEventListener("click", function (e) {
       if (!e.target.closest("#searchArea")) closeDropdown();
     });
 
-    // Results dropdown
     const dd = $("resultsDrop");
     if (dd) {
       dd.addEventListener("click", function (e) {
@@ -762,7 +685,6 @@
       });
     }
 
-    // Chips (filters)
     document.querySelectorAll(".chip[data-chip]").forEach(function (chip) {
       chip.addEventListener("click", function () {
         document.querySelectorAll(".chip[data-chip]").forEach(function (c) { c.classList.remove("active"); });
@@ -776,7 +698,6 @@
       });
     });
 
-    // Stats
     document.querySelectorAll(".stat").forEach(function (stat) {
       stat.addEventListener("click", function () {
         const f = stat.dataset.filter;
@@ -790,7 +711,6 @@
       });
     });
 
-    // Sort
     const sortSel = $("sortSelect");
     if (sortSel) {
       sortSel.addEventListener("change", function (e) {
@@ -799,24 +719,19 @@
       });
     }
 
-    // Movie modal
     const modalClose = $("modalClose");
     if (modalClose) modalClose.addEventListener("click", closeModal);
     const mm = $("movieModal");
     if (mm) {
-      mm.addEventListener("click", function (e) {
-        if (e.target === mm) closeModal();
-      });
+      mm.addEventListener("click", function (e) { if (e.target === mm) closeModal(); });
     }
 
-    // Status buttons
     document.querySelectorAll(".status-pick").forEach(function (btn) {
       btn.addEventListener("click", function () {
         if (state.modalId) setStatus(state.modalId, btn.dataset.status);
       });
     });
 
-    // Modal action buttons
     bindClick("btnFav", function () { if (state.modalId) toggleFavorite(state.modalId); });
     bindClick("btnFavQuick", function (e) { if (state.modalId) toggleFavorite(state.modalId, e); });
     bindClick("btnTrailer", function () { openMovieLink("trailerUrl"); });
@@ -831,7 +746,6 @@
     });
     bindClick("btnDelete", handleDelete);
 
-    // Notes (debounced)
     const noteEl = $("mNote");
     if (noteEl) {
       noteEl.addEventListener("input", debounce(function () {
@@ -843,7 +757,6 @@
       }, 600));
     }
 
-    // Edit modal
     bindClick("editClose", closeEdit);
     bindClick("editCancel", closeEdit);
     const em = $("editModal");
@@ -853,10 +766,8 @@
     const editForm = $("editForm");
     if (editForm) editForm.addEventListener("submit", handleEditSubmit);
 
-    // Manual add
     bindClick("manualBtn", function () { openEdit(null); });
 
-    // Hero buttons
     bindClick("heroSearchBtn", function () {
       const sa = $("searchArea");
       if (sa) sa.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -867,7 +778,6 @@
       if (ml) ml.scrollIntoView({ behavior: "smooth", block: "start" });
     });
 
-    // Swatches (accent themes)
     document.querySelectorAll(".swatch").forEach(function (sw) {
       sw.addEventListener("click", function () {
         const accent = sw.dataset.accent;
@@ -878,7 +788,6 @@
       });
     });
 
-    // Light/dark toggle
     bindClick("themeToggle", function () {
       document.body.classList.toggle("light");
       const light = document.body.classList.contains("light");
@@ -887,7 +796,6 @@
       try { localStorage.setItem(KEYS.MODE, light ? "1" : "0"); } catch (e) {}
     });
 
-    // Escape key
     document.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
         if (document.getElementById("movieModal")?.classList.contains("on")) closeModal();
@@ -903,13 +811,8 @@
       }
     });
 
-    // Scroll progress
     window.addEventListener("scroll", updateScrollProgress, { passive: true });
-
-    // Scroll reveal
     setupScrollReveal();
-
-    // Hero parallax
     setupHeroParallax();
   }
 
@@ -934,9 +837,6 @@
     if (window.CV_AUTH && window.CV_AUTH.scheduleCloudSave) window.CV_AUTH.scheduleCloudSave();
   }
 
-  /* =========================================================
-     SEARCH KEYBOARD NAVIGATION
-  ========================================================== */
   function handleSearchKeydown(e) {
     const items = document.querySelectorAll("#resultsDrop .result-item");
     if (!items.length) return;
@@ -947,148 +847,4 @@
       updateHighlight(items);
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
-      state.highlightIdx = Math.max(state.highlightIdx - 1, 0);
-      updateHighlight(items);
-    } else if (e.key === "Enter" && state.highlightIdx >= 0 && state.searchResults[state.highlightIdx]) {
-      e.preventDefault();
-      addMovieFromResult(state.searchResults[state.highlightIdx]);
-      closeDropdown();
-    } else if (e.key === "Escape") {
-      closeDropdown();
-    }
-  }
-
-  /* =========================================================
-     SCROLL PROGRESS
-  ========================================================== */
-  function updateScrollProgress() {
-    const el = $("scrollProgress");
-    if (!el) return;
-    const h = document.documentElement.scrollHeight - window.innerHeight;
-    const pct = h > 0 ? (window.scrollY / h) * 100 : 0;
-    el.style.width = pct + "%";
-  }
-
-  /* =========================================================
-     SCROLL REVEAL
-  ========================================================== */
-  function setupScrollReveal() {
-    document.querySelectorAll(".stat, .progress-bar-wrap, .filters, .hero, .theme-picker").forEach(function (el) {
-      el.classList.add("reveal");
-    });
-    const observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add("revealed");
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
-    document.querySelectorAll(".reveal").forEach(function (el) { observer.observe(el); });
-  }
-
-  /* =========================================================
-     HERO PARALLAX
-  ========================================================== */
-  function setupHeroParallax() {
-    const hero = document.querySelector(".hero");
-    if (!hero) return;
-    hero.addEventListener("mousemove", function (e) {
-      const rect = hero.getBoundingClientRect();
-      const x = (e.clientX - rect.left) / rect.width - 0.5;
-      const y = (e.clientY - rect.top) / rect.height - 0.5;
-      hero.style.setProperty("--mouse-x", (x * 20) + "px");
-      hero.style.setProperty("--mouse-y", (y * 20) + "px");
-    });
-    hero.addEventListener("mouseleave", function () {
-      hero.style.setProperty("--mouse-x", "0px");
-      hero.style.setProperty("--mouse-y", "0px");
-    });
-  }
-
-  /* =========================================================
-     INIT
-  ========================================================== */
-  function init() {
-    loadVault();
-    loadCollections();
-    loadAchievements();
-    loadWatchHistory();
-
-    // Restore accent
-    try {
-      const accent = localStorage.getItem(KEYS.THEME) || "gold";
-      document.body.dataset.accent = accent;
-      document.querySelectorAll(".swatch").forEach(function (s) {
-        s.classList.toggle("active", s.dataset.accent === accent);
-      });
-    } catch (e) {}
-
-    // Restore light mode
-    try {
-      if (localStorage.getItem(KEYS.MODE) === "1") {
-        document.body.classList.add("light");
-        const btn = $("themeToggle");
-        if (btn) btn.textContent = "☀️";
-      }
-    } catch (e) {}
-
-    // Search source label
-    const srcEl = $("searchSource");
-    if (srcEl) {
-      srcEl.textContent = CFG.TMDB_READY ? "✓ TMDB (Full Details)" : "iTunes Free Search";
-    }
-
-    renderAll();
-    bindEvents();
-
-    // Initialize Firebase (async)
-    if (window.CV_AUTH && window.CV_AUTH.init) {
-      window.CV_AUTH.init();
-    }
-
-    // Hide loader
-    setTimeout(function () {
-      const loader = $("appLoader");
-      if (loader) loader.classList.add("hidden");
-    }, 600);
-
-    console.log("🎬 CineVault ready — " + state.vault.length + " movies in vault");
-    console.log("   🔍 Search source:", CFG.TMDB_READY ? "TMDB" : "iTunes");
-    console.log("   🔥 Firebase:", CFG.FIREBASE_READY ? "enabled" : "disabled");
-  }
-
-  /* =========================================================
-     EXPORTS (used by features.js and auth.js)
-  ========================================================== */
-  window.CV_APP = {
-    esc: esc,
-    toast: toast,
-    renderAll: renderAll,
-    renderMovies: renderMovies,
-    updateStats: updateStats,
-    saveVault: saveVault,
-    loadVault: loadVault,
-    saveCollections: saveCollections,
-    loadCollections: loadCollections,
-    saveAchievements: saveAchievements,
-    saveWatchHistory: saveWatchHistory,
-    addMovieFromResult: addMovieFromResult,
-    openModal: openModal,
-    closeModal: closeModal,
-    openEdit: openEdit,
-    closeEdit: closeEdit,
-    toggleFavorite: toggleFavorite,
-    setStatus: setStatus,
-    getFiltered: getFiltered,
-    init: init
-  };
-
-  // Auto-init when DOM ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-
-})();
+      state
